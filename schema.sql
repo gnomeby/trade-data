@@ -1,0 +1,7 @@
+CREATE TABLE prices (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  name TEXT NOT NULL,
+  price_cents INTEGER NOT NULL
+);
+CREATE INDEX prices_by_names ON prices(name, created);
