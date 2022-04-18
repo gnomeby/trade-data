@@ -4,6 +4,11 @@
     </head>
     <body>
         <form method="post" action="/">
+            <select>
+                {% for name in names %}
+                    <option name="{{ name }}">{{ name }}</option>
+                {% endfor %}
+            </select>
         </form>
 
     </body>
