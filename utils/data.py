@@ -1,35 +1,30 @@
+import asyncio
 import json
 import random
-from time import sleep, time
 from datetime import datetime
-import websockets
+from time import sleep, time
 
 import click
+import websockets
+
 from flask.cli import with_appcontext
 
-from utils.config import SECRET_KEY
+from utils.config import SECRET_KEY, WS_HOST, WS_PORT
 from utils.db import get_db, close_db
 
 
 def generate_movement():
     return random.choice([-1, 1])
 
-
-@click.command('data-generator')
-@click.argument('amount', default=100) #, help='amount of tickers')
-@click.argument('interval', default=1) #, help='interval in seconds')
-@with_appcontext
-def data_generator(amount=100, interval=1):
-    """Generate test data for DB."""
-
+async def publisher(amount: int, interval: float):
+    # Connecting
     db = get_db()
-    click.echo('Starting data generator.')
-
-    with websockets.connect("ws://localhost:8765") as websocket:
-        websocket.send(json.dumps({"cmd": "publisher", "secret_key": SECRET_KEY}))
-        response = json.loads(websocket.recv())
+    async with websockets.connect(f"ws://{WS_HOST}:{WS_PORT}") as websocket:
+        await websocket.send(json.dumps({"cmd": "publisher", "secret_key": SECRET_KEY}))
+        response = json.loads(await websocket.recv())
         user_id = response["user_id"]
 
+        # Publishing
         while(True):
             prices_delta_map = {}
             for i in range(amount):
@@ -39,18 +34,30 @@ def data_generator(amount=100, interval=1):
                 db.execute(
                     "INSERT INTO prices (name, price_cents) VALUES (?, ?)", (name, delta),
                 )
+
             db.commit()
             click.echo('Generated %d ticker prices, %s' % (amount, datetime.now().isoformat()))
 
             for name, delta in prices_delta_map.items():
-                websocket.send(json.dumps(
+                await websocket.send(json.dumps(
                     {
-                        "user_id": user_id,
+                        "cmd": "news", "user_id": user_id,
                         "topic": name, "date": int(time()), "delta": delta,
                     }
                 ))
 
-            sleep(1.0)
+            sleep(interval)
+
+@click.command('data-generator')
+@click.argument('amount', default=100) #, help='amount of tickers')
+@click.argument('interval', default=1.0) #, help='interval in seconds')
+@with_appcontext
+def data_generator(amount=100, interval=1.0):
+    """Generate test data for DB."""
+
+    click.echo('Starting data generator.')
+    asyncio.run(publisher(amount, interval))
+
 
 def init_data_cli(app):
     app.teardown_appcontext(close_db)

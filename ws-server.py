@@ -6,7 +6,7 @@ import json
 import uuid
 import websockets
 
-from utils.config import SECRET_KEY
+from utils.config import SECRET_KEY, WS_HOST, WS_LISTEN, WS_PORT
 
 
 CONNECTIONS = set()
@@ -28,9 +28,11 @@ async def do(websocket):
 
             if "subscribe" == data["cmd"]:
                 SUBSCRIPTIONS[data["topic"]].add(websocket)
+                print("Subscribed to %s:" % data["topic"], websocket)
 
             elif "unsubscribe" == data["cmd"]:
                 SUBSCRIPTIONS[data["topic"]].remove(websocket)
+                print("Unsubscribed from %s:" % data["topic"], websocket)
 
             elif "publisher" == data["cmd"]:
                 if data["secret_key"] != SECRET_KEY:
@@ -43,6 +45,7 @@ async def do(websocket):
                 else:
                     user_id = uuid.uuid4().hex
                     PUBLISHERS[user_id] = websocket
+                    print("Added to publishers:", websocket)
                     response["user_id"] = user_id
 
             elif "news" == data["cmd"]:
@@ -59,9 +62,22 @@ async def do(websocket):
         except Exception as ex:
             await websocket.send('{"error": "bad request", "details": "%s"}' % ex.args[0])
 
+    for user_id in list(PUBLISHERS.keys()):
+        if PUBLISHERS[user_id] == websocket:
+            del PUBLISHERS[user_id]
+            print("Removed from publishers:", websocket)
+
+    for topic, items in SUBSCRIPTIONS.items():
+        if websocket in items:
+            SUBSCRIPTIONS[topic].remove(websocket)
+            print("Unsubscribed from %s:" % topic, websocket)
+
+    CONNECTIONS.remove(websocket)
+    print("Closed connection:", websocket)
 
 async def main():
-    async with websockets.serve(do, "localhost", 8765):
+    async with websockets.serve(do, WS_LISTEN, WS_PORT):
+        print("Starting WesSocker server at %s:%s" % (WS_LISTEN, WS_PORT))
         await asyncio.Future()  # run forever
 
 asyncio.run(main())
