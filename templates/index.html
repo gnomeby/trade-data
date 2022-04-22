@@ -1,15 +1,128 @@
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>Prices</title>
-    </head>
-    <body>
-        <form method="post" action="/">
-            <select>
-                {% for name in names %}
-                    <option name="{{ name }}">{{ name }}</option>
-                {% endfor %}
-            </select>
-        </form>
+<head>
+    <title>Prices</title>
+</head>
+<body>
 
-    </body>
+    <form method="post" action="/">
+        <select name="current_topic">
+            {% for name in names %}
+                <option name="{{ name }}">{{ name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+<script>
+    var checkingInterval = 100;
+    var checkingAmounts = 30;
+    var unprocessedResponses = [];
+
+    var socket = new WebSocket('ws://{{ WS_HOST }}:{{ WS_PORT }}');
+    socket.addEventListener("open", function (event) {
+    });
+    socket.addEventListener("message", function (event) {
+        var data = JSON.parse(event.data);
+        if (data.msg)
+            unprocessedResponses.push(data);
+        else
+            console.log(data);
+    });
+    socket.addEventListener("close", function (event) {
+        alert("WS closed");
+    });
+    socket.addEventListener("error", function (event) {
+        alert("WS errored");
+    });
+
+    function sendRequest(msg) {
+        return new Promise(function(resolve, reject) {
+            (function loopcheck() {
+                if (socket.readyState == WebSocket.CLOSING || socket.readyState == WebSocket.CLOSED) {
+                    return reject("WS has been closed");
+                }
+
+                if (socket.readyState == WebSocket.OPEN) {
+                    socket.send(msg);
+                    return resolve();
+                }
+
+                console.log("delay sendRequest");
+                setTimeout(loopcheck, checkingInterval);
+            })();
+        });
+    }
+
+    function checkResponse(msg_value) {
+        return new Promise(function(resolve, reject) {
+            (function loopcheck(retries_left) {
+                if (!retries_left) {
+                    return reject("Response timeout");
+                }
+                if (socket.readyState == WebSocket.CLOSING || socket.readyState == WebSocket.CLOSED) {
+                    return reject("WS has been closed");
+                }
+
+                for(var index in unprocessedResponses) {
+                    if (unprocessedResponses[index].msg == msg_value) {
+                        unprocessedResponses.splice(index, 1);
+                        return resolve();
+                    }
+                }
+
+                console.log("delay checkResponse");
+                setTimeout(function() { loopcheck(retries_left - 1); }, checkingInterval);
+            })(checkingAmounts);
+        });
+    }
+
+    async function socketSendAndReceive(msg) {
+        await sendRequest(msg);
+        return await checkResponse("OK");
+    }
+
+    async function preloadData(url = '') {
+        const response = await fetch(url, {
+            method: 'GET', // *GET, POST, PUT, DELETE, etc.
+            mode: 'no-cors', // no-cors, *cors, same-origin
+            cache: 'default', // *default, no-cache, reload, force-cache, only-if-cached
+            credentials: 'same-origin', // include, *same-origin, omit
+            headers: {'Content-Type': 'application/json'},
+            redirect: 'follow', // manual, *follow, error
+        });
+
+        return await response.json(); // parses JSON response into native JavaScript objects
+    }
+
+    function startMonitoringTopic(topic = '') {
+        location.hash = topic;
+
+        preloadData('/initial_data?topic=' + topic + '&period=last')
+            .then((data) => {
+                var last_unixtime = data[data.length - 1][0];
+                console.log(data); // JSON data parsed by `response.json()` call
+
+                socketSendAndReceive('{"cmd": "subscribe", "topic": "' + topic + '", "after": "' + last_unixtime + '"}')
+                .catch(function (err) {
+                    alert(err);
+                });
+            }
+        );
+    }
+
+    var selector;
+    addEventListener('DOMContentLoaded', (event) => {
+        selector = document.getElementsByName('current_topic')[0];
+
+        startMonitoringTopic(selector.value);
+
+        selector.addEventListener('change', (event) => {
+            socketSendAndReceive('{"cmd": "unsubscribe_all"}');
+            startMonitoringTopic(selector.value);
+        });
+    });
+
+</script>
+
+</body>
 </html>

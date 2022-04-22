@@ -41,7 +41,7 @@ async def publisher(amount: int, interval: float):
             for name, delta in prices_delta_map.items():
                 await websocket.send(json.dumps(
                     {
-                        "cmd": "news", "user_id": user_id,
+                        "cmd": "inbox", "user_id": user_id,
                         "topic": name, "date": int(time()), "delta": delta,
                     }
                 ))

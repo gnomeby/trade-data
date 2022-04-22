@@ -25,14 +25,23 @@ async def do(websocket):
 
         try:
             data = json.loads(message)
+            topic = data.get("topic")
 
             if "subscribe" == data["cmd"]:
-                SUBSCRIPTIONS[data["topic"]].add(websocket)
-                print("Subscribed to %s:" % data["topic"], websocket)
+                SUBSCRIPTIONS[topic].add(websocket)
+                response["subscribed"] = topic
+                print("Subscribed to %s:" % topic, websocket)
 
             elif "unsubscribe" == data["cmd"]:
-                SUBSCRIPTIONS[data["topic"]].remove(websocket)
-                print("Unsubscribed from %s:" % data["topic"], websocket)
+                SUBSCRIPTIONS[topic].remove(websocket)
+                response["unsubscribed"] = topic
+                print("Unsubscribed from %s:" % topic, websocket)
+
+            elif "unsubscribe_all" == data["cmd"]:
+                for cur_topic in SUBSCRIPTIONS.keys():
+                    if websocket in SUBSCRIPTIONS[cur_topic]:
+                        SUBSCRIPTIONS[cur_topic].remove(websocket)
+                print("Unsubscribed from all", websocket)
 
             elif "publisher" == data["cmd"]:
                 if data["secret_key"] != SECRET_KEY:
@@ -48,11 +57,11 @@ async def do(websocket):
                     print("Added to publishers:", websocket)
                     response["user_id"] = user_id
 
-            elif "news" == data["cmd"]:
+            elif "inbox" == data["cmd"]:
                 if data["user_id"] not in PUBLISHERS:
                     await websocket.send('{"error": "unknown publisher"}')
                 else:
-                    websockets.broadcast(SUBSCRIPTIONS[data["topic"]], json.dumps(
+                    websockets.broadcast(SUBSCRIPTIONS[topic], json.dumps(
                         {"date": data["date"], "delta": data["delta"]}
                     ))
 
