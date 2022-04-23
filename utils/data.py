@@ -2,7 +2,6 @@ import asyncio
 import json
 import random
 from datetime import datetime, timezone
-from time import sleep
 
 import click
 import websockets
@@ -46,7 +45,7 @@ async def publisher(amount: int, interval: float):
                     }
                 ))
 
-            sleep(interval)
+            await asyncio.sleep(interval)
 
 @click.command('data-generator')
 @click.argument('amount', default=100) #, help='amount of tickers')

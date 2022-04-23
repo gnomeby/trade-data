@@ -37,7 +37,6 @@ async def do(websocket):
                 if after:
                     for (cur_date, cur_delta) in CACHED_STREAMS[topic]:
                         if cur_date > after:
-                            print(cur_date, after)
                             await websocket.send(json.dumps(
                                 {"date": cur_date, "delta": cur_delta}
                             ))
