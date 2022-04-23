@@ -1,12 +1,11 @@
 import time
 
-from flask import Flask, render_template, request, send_from_directory, jsonify, Response
+from flask import Flask, render_template, request, send_from_directory, jsonify
 
-from utils.config import SECRET_KEY, DATABASE_FILE, FLASK_RUN_FROM_CLI, WS_HOST, WS_PORT
+from utils.config import SECRET_KEY, DATABASE_FILE, FLASK_RUN_FROM_CLI, WS_HOST, WS_PORT, CACHED_TIME
 from utils.data import init_data_cli
 from utils.db import init_db_cli, get_db
 
-ONE_HOUR = 3600
 ONE_MINUTE = 60
 
 
@@ -45,11 +44,12 @@ def initial_data():
     db = get_db()
 
     data = []
-    for row in db.execute("SELECT created, price_cents FROM prices WHERE name = ? ORDER BY created ASC", (topic, )):
-        (created, price_cents) = row
-        data.append([time.mktime(created.timetuple()), price_cents / 100])
+    for row in db.execute("SELECT unixepoch(created) as created_ts, price_cents FROM prices WHERE name = ? ORDER BY created ASC", (topic, )):
+        (created_ts, price_cents) = row
+        data.append([int(created_ts), price_cents / 100])
 
     result = jsonify(data)
-    result.headers['Cache-Control'] = 'public, smax-age=%d, max-age=%d,' % (ONE_HOUR // 4, ONE_HOUR // 4 - ONE_MINUTE)
+    result.headers['Cache-Control'] = 'public, smax-age=%d, max-age=%d,' % (CACHED_TIME, CACHED_TIME - ONE_MINUTE)
+    assert (CACHED_TIME - ONE_MINUTE) > 60
 
     return result

@@ -17,6 +17,7 @@
     var checkingInterval = 100;
     var checkingAmounts = 30;
     var sendAndReceiveDelay = 100;
+    var firstSendingDelay = 100;
     var unprocessedResponses = [];
 
     var socket = new WebSocket('ws://{{ WS_HOST }}:{{ WS_PORT }}');
@@ -115,7 +116,7 @@
     addEventListener('DOMContentLoaded', (event) => {
         selector = document.getElementsByName('current_topic')[0];
 
-        startMonitoringTopic(selector.value);
+        setTimeout(startMonitoringTopic, firstSendingDelay, selector.value);
 
         selector.addEventListener('change', (event) => {
             socketSendAndReceive('{"cmd": "unsubscribe_all"}')

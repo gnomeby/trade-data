@@ -1,8 +1,8 @@
 import asyncio
 import json
 import random
-from datetime import datetime
-from time import sleep, time
+from datetime import datetime, timezone
+from time import sleep
 
 import click
 import websockets
@@ -36,13 +36,13 @@ async def publisher(amount: int, interval: float):
                 )
 
             db.commit()
-            click.echo('Generated %d ticker prices, %s' % (amount, datetime.now().isoformat()))
+            click.echo('Generated %d ticker prices, %s' % (amount, datetime.now(timezone.utc).isoformat()))
 
             for name, delta in prices_delta_map.items():
                 await websocket.send(json.dumps(
                     {
                         "cmd": "inbox", "user_id": user_id,
-                        "topic": name, "date": int(time()), "delta": delta,
+                        "topic": name, "date": int(datetime.now(timezone.utc).timestamp()), "delta": delta,
                     }
                 ))
 
