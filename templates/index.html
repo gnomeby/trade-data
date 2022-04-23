@@ -16,6 +16,7 @@
 <script>
     var checkingInterval = 100;
     var checkingAmounts = 30;
+    var sendAndReceiveDelay = 100;
     var unprocessedResponses = [];
 
     var socket = new WebSocket('ws://{{ WS_HOST }}:{{ WS_PORT }}');
@@ -29,27 +30,27 @@
             console.log(data);
     });
     socket.addEventListener("close", function (event) {
-        alert("WS closed");
+        console.error("WS closed");
     });
     socket.addEventListener("error", function (event) {
-        alert("WS errored");
+        console.error("WS errored");
     });
 
     function sendRequest(msg) {
         return new Promise(function(resolve, reject) {
-            (function loopcheck() {
+            (function loopcheck(retries_left) {
                 if (socket.readyState == WebSocket.CLOSING || socket.readyState == WebSocket.CLOSED) {
-                    return reject("WS has been closed");
+                    return reject("Sending: WS has been closed");
                 }
 
                 if (socket.readyState == WebSocket.OPEN) {
                     socket.send(msg);
-                    return resolve();
+                    return setTimeout(resolve, sendAndReceiveDelay);
                 }
 
                 console.log("delay sendRequest");
-                setTimeout(loopcheck, checkingInterval);
-            })();
+                setTimeout(function() { loopcheck(retries_left - 1); }, checkingInterval);
+            })(checkingAmounts);
         });
     }
 
@@ -60,7 +61,7 @@
                     return reject("Response timeout");
                 }
                 if (socket.readyState == WebSocket.CLOSING || socket.readyState == WebSocket.CLOSED) {
-                    return reject("WS has been closed");
+                    return reject("Receiving: WS has been closed");
                 }
 
                 for(var index in unprocessedResponses) {
@@ -103,9 +104,9 @@
                 console.log(data); // JSON data parsed by `response.json()` call
 
                 socketSendAndReceive('{"cmd": "subscribe", "topic": "' + topic + '", "after": "' + last_unixtime + '"}')
-                .catch(function (err) {
-                    alert(err);
-                });
+                    .catch(function (err) {
+                        console.error(err);
+                    });
             }
         );
     }
@@ -117,7 +118,10 @@
         startMonitoringTopic(selector.value);
 
         selector.addEventListener('change', (event) => {
-            socketSendAndReceive('{"cmd": "unsubscribe_all"}');
+            socketSendAndReceive('{"cmd": "unsubscribe_all"}')
+                .catch(function (err) {
+                    console.error(err);
+                });
             startMonitoringTopic(selector.value);
         });
     });
