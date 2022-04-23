@@ -7,6 +7,12 @@ python3.8 -m venv .venv
 source .venv/bin/activate
 ```
 
+## Run
+
+```bash
+sh init_and_start.sh
+```
+
 ## Debugger
 
 Configure pudb to classic shell not bpython.
