@@ -65,8 +65,11 @@
         var data = JSON.parse(event.data);
         if (data.msg)
             unprocessedResponses.push(data);
-        else
-            console.log(data);
+        else {
+            ply.data[0].x.push(new Date(data.date));
+            ply.data[0].y.push(data.delta);
+            Plotly.redraw(ply);
+        }
     });
     socket.addEventListener("close", function (event) {
         console.error("WS closed");
