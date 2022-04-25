@@ -19,14 +19,26 @@
 <script>
     var ply = document.getElementById('ticker_prices');
 
-    Plotly.newPlot( ply, [{
+    function startNewGraph(data) {
+        lastdata = data;
 
-        x: [1, 2, 3, 4, 5],
+        var x_data = [];
+        var y_data = [];
+        data.forEach(element => {
+            x_data.push(new Date(element[0]));
+            y_data.push(element[1]);
+        });
 
-        y: [1, 2, 4, 8, 16] }], {
+        var data = [
+            {
+                x: x_data,
+                y: y_data,
+                type: 'scatter'
+            }
+        ];
 
-    margin: { t: 0 } } );
-
+        Plotly.newPlot(ply, data);
+    }
 </script>
 
 <script>
@@ -118,7 +130,8 @@
         preloadData('/initial_data?topic=' + topic + '&period=last')
             .then((data) => {
                 var last_unixtime = data[data.length - 1][0];
-                console.log(data); // JSON data parsed by `response.json()` call
+
+                startNewGraph(data);
 
                 socketSendAndReceive('{"cmd": "subscribe", "topic": "' + topic + '", "after": "' + last_unixtime + '"}')
                     .catch(function (err) {

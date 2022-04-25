@@ -46,7 +46,7 @@ def initial_data():
     data = []
     for row in db.execute("SELECT unixepoch(created) as created_ts, price_cents FROM prices WHERE name = ? ORDER BY created ASC", (topic, )):
         (created_ts, price_cents) = row
-        data.append([int(created_ts), price_cents / 100])
+        data.append([int(created_ts * 1000), price_cents / 100])
 
     result = jsonify(data)
     result.headers['Cache-Control'] = 'public, smax-age=%d, max-age=%d,' % (CACHED_TIME, CACHED_TIME - ONE_MINUTE)
