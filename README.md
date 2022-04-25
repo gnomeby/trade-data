@@ -35,3 +35,4 @@ After getting precached data for the ticker the browser will subscribe to next p
 # TODO
 
 * Switching to timeseries DB.
+* Use TimeRange in Plotly.
