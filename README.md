@@ -31,3 +31,7 @@ result.headers['Cache-Control'] = 'public, smax-age=%d, max-age=%d,' % (ONE_HOUR
 ```
 
 After getting precached data for the ticker the browser will subscribe to next prices fluctuations using the last received timestamp in precached data.
+
+# TODO
+
+* Switching to timeseries DB.

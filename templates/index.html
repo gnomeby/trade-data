@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Prices</title>
+    <script src="/static/plotly-2.11.1.min.js"></script>
 </head>
 <body>
 
@@ -12,6 +13,21 @@
             {% endfor %}
         </select>
     </form>
+
+    <div id="ticker_prices" style="width:1200;height:400px;margin-top: 3em;"></div>
+
+<script>
+    var ply = document.getElementById('ticker_prices');
+
+    Plotly.newPlot( ply, [{
+
+        x: [1, 2, 3, 4, 5],
+
+        y: [1, 2, 4, 8, 16] }], {
+
+    margin: { t: 0 } } );
+
+</script>
 
 <script>
     var checkingInterval = 100;
