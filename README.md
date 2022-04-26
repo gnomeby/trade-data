@@ -1,5 +1,11 @@
 # Trade data viewer
 
+## Running via docker
+
+```bash
+docker run --network=host --rm -it trade-data
+```
+
 ## Install
 
 ```bash
@@ -36,3 +42,5 @@ After getting precached data for the ticker the browser will subscribe to next p
 
 * Switching to timeseries DB.
 * Use TimeRange in Plotly.
+* Run through gunicorn
+* Make instruction to run through nginx and configure nginx cache
