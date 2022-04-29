@@ -28,7 +28,7 @@
         data.forEach(element => {
             x_data.push(new Date(element[0]));
             value += element[1];
-            y_data.push(value);
+            y_data.push(value / 100);
         });
 
         var data = [
@@ -75,7 +75,8 @@
         }
         else {
             ply.data[0].x.push(new Date(data.date));
-            ply.data[0].y.push((ply.data[0].y.length ? ply.data[0].y[ply.data[0].y.length - 1] : 0) + data.delta);
+            var last_value = (ply.data[0].y.length ? ply.data[0].y[ply.data[0].y.length - 1] : 0) * 100;
+            ply.data[0].y.push((last_value + data.delta) / 100);
 
             clearTimeout(redrawTimerID);
             redrawTimerID = setTimeout(Plotly.redraw, redrawDelay, ply);

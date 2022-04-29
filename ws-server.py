@@ -76,7 +76,7 @@ async def do(websocket):
                     await websocket.send('{"error": "unknown publisher"}')
                 else:
                     websockets.broadcast(SUBSCRIPTIONS[topic], json.dumps(
-                        {"date": data["date"] * 1000, "delta": data["delta"] / 100}
+                        {"date": data["date"] * 1000, "delta": data["delta"]}
                     ))
 
                     CACHED_STREAMS[topic].append((data["date"], data["delta"]))

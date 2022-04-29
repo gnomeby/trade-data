@@ -28,5 +28,5 @@ RUN flask init-db
 
 CMD [ "sh", "init_and_start.sh" ]
 
-EXPOSE 8000
+EXPOSE 5000
 EXPOSE 8765
