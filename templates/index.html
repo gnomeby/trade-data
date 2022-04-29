@@ -53,22 +53,30 @@
 
 <script>
     var checkingInterval = 100;
+    var redrawDelay = 50;
     var checkingAmounts = 30;
     var sendAndReceiveDelay = 100;
     var firstSendingDelay = 100;
     var unprocessedResponses = [];
+    var redrawTimerID;
 
     var socket = new WebSocket('ws://{{ WS_HOST }}:{{ WS_PORT }}');
     socket.addEventListener("open", function (event) {
     });
     socket.addEventListener("message", function (event) {
         var data = JSON.parse(event.data);
-        if (data.msg)
+        if (data.msg) {
             unprocessedResponses.push(data);
+        }
+        else if (data.error) {
+            console.error(data.error, data.details);
+        }
         else {
             ply.data[0].x.push(new Date(data.date));
             ply.data[0].y.push(data.delta);
-            Plotly.redraw(ply);
+
+            clearTimeout(redrawTimerID);
+            redrawTimerID = setTimeout(Plotly.redraw, redrawDelay, ply);
         }
     });
     socket.addEventListener("close", function (event) {
