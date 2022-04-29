@@ -33,12 +33,12 @@ async def do(websocket):
                 print("Subscribed to %s:" % topic, websocket)
                 await websocket.send(json.dumps(response))
 
-                after = int(data.get("after", "0"))
+                after = int(data.get("after", "0")) // 1000
                 if after:
                     for (cur_date, cur_delta) in CACHED_STREAMS[topic]:
                         if cur_date > after:
                             await websocket.send(json.dumps(
-                                {"date": cur_date, "delta": cur_delta}
+                                {"date": cur_date * 1000, "delta": cur_delta}
                             ))
 
             elif "unsubscribe" == command:

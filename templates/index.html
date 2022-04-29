@@ -14,7 +14,7 @@
         </select>
     </form>
 
-    <div id="ticker_prices" style="width:1200;height:400px;margin-top: 3em;"></div>
+    <div id="ticker_prices" style="width: 1200px; height: 400px; margin-top: 3em;"></div>
 
 <script>
     var ply = document.getElementById('ticker_prices');
@@ -24,9 +24,11 @@
 
         var x_data = [];
         var y_data = [];
+        var value = 0;
         data.forEach(element => {
             x_data.push(new Date(element[0]));
-            y_data.push(element[1]);
+            value += element[1];
+            y_data.push(value);
         });
 
         var data = [
@@ -73,7 +75,7 @@
         }
         else {
             ply.data[0].x.push(new Date(data.date));
-            ply.data[0].y.push(data.delta);
+            ply.data[0].y.push((ply.data[0].y.length ? ply.data[0].y[ply.data[0].y.length - 1] : 0) + data.delta);
 
             clearTimeout(redrawTimerID);
             redrawTimerID = setTimeout(Plotly.redraw, redrawDelay, ply);
@@ -150,7 +152,7 @@
 
         preloadData('/initial_data?topic=' + topic + '&period=last')
             .then((data) => {
-                var last_unixtime = data[data.length - 1][0];
+                var last_unixtime = data.length ? data[data.length - 1][0] : 0;
 
                 startNewGraph(topic, data);
 
